@@ -37,6 +37,9 @@ use url::Url;
 use webrender_api::units::{DeviceIntRect, DevicePixel, DevicePoint, DeviceSize};
 
 use crate::clipboard_delegate::{ClipboardDelegate, DefaultClipboardDelegate};
+use crate::credential_management_delegate::{
+    CredentialManagementDelegate, DefaultCredentialManagementDelegate,
+};
 #[cfg(feature = "gamepad")]
 use crate::gamepad_delegate::{DefaultGamepadDelegate, GamepadDelegate};
 use crate::responders::AutomaticResponder;
@@ -100,6 +103,7 @@ pub(crate) struct WebViewInner {
     pub(crate) servo: Servo,
     pub(crate) delegate: Rc<dyn WebViewDelegate>,
     pub(crate) clipboard_delegate: Rc<dyn ClipboardDelegate>,
+
     #[cfg(feature = "gamepad")]
     pub(crate) gamepad_delegate: Rc<dyn GamepadDelegate>,
 
@@ -166,6 +170,7 @@ impl WebView {
             clipboard_delegate: builder
                 .clipboard_delegate
                 .unwrap_or_else(|| Rc::new(DefaultClipboardDelegate)),
+            credential_management_delegate: Rc::new(DefaultCredentialManagementDelegate::new()),
             #[cfg(feature = "gamepad")]
             gamepad_delegate: builder
                 .gamepad_delegate
@@ -297,6 +302,17 @@ impl WebView {
     #[cfg(feature = "gamepad")]
     pub fn gamepad_delegate(&self) -> Rc<dyn GamepadDelegate> {
         self.inner().gamepad_delegate.clone()
+    }
+
+    pub fn credential_management_delegate(&self) -> Rc<dyn CredentialManagementDelegate> {
+        self.inner().credential_management_delegate.clone()
+    }
+
+    pub fn set_credential_management_delegate(
+        &self,
+        delegate: Rc<dyn CredentialManagementDelegate>,
+    ) {
+        self.inner_mut().credential_management_delegate = delegate;
     }
 
     /// Get the unique identifier for this [`WebView`].
