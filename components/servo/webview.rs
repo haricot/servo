@@ -162,35 +162,37 @@ impl WebView {
             .register_rendering_context(builder.rendering_context.clone());
 
         let id = WebViewId::new(painter_id);
-        let webview = Self(Rc::new(RefCell::new(WebViewInner {
-            id,
-            servo: servo.clone(),
-            rendering_context: builder.rendering_context,
-            delegate: builder.delegate,
-            clipboard_delegate: builder
-                .clipboard_delegate
-                .unwrap_or_else(|| Rc::new(DefaultClipboardDelegate)),
-            credential_management_delegate: Rc::new(DefaultCredentialManagementDelegate::new()),
-            #[cfg(feature = "gamepad")]
-            gamepad_delegate: builder
-                .gamepad_delegate
-                .unwrap_or_else(|| Rc::new(DefaultGamepadDelegate)),
-            accesskit_tree_id: None,
-            grafted_accesskit_tree_id: None,
-            grafted_accesskit_tree_epoch: None,
-            accessibility_viewport_changed: Cell::new(false),
-            hidpi_scale_factor: builder.hidpi_scale_factor,
-            load_status: LoadStatus::Started,
-            status_text: None,
-            page_title: None,
-            favicon: None,
-            focused: false,
-            animating: false,
-            cursor: Cursor::Pointer,
-            back_forward_list: Default::default(),
-            back_forward_list_index: 0,
-            user_content_manager: builder.user_content_manager.clone(),
-        })));
+	let webview = Self(Rc::new(RefCell::new(WebViewInner {
+	    id,
+	    servo: servo.clone(),
+	    rendering_context: builder.rendering_context,
+	    delegate: builder.delegate,
+	    clipboard_delegate: builder
+		.clipboard_delegate
+		.unwrap_or_else(|| Rc::new(DefaultClipboardDelegate)),
+	    credential_management_delegate: Rc::new(
+		DefaultCredentialManagementDelegate::default(),
+	    ),
+	    #[cfg(feature = "gamepad")]
+	    gamepad_delegate: builder
+		.gamepad_delegate
+		.unwrap_or_else(|| Rc::new(DefaultGamepadDelegate)),
+	    accesskit_tree_id: None,
+	    grafted_accesskit_tree_id: None,
+	    grafted_accesskit_tree_epoch: None,
+	    accessibility_viewport_changed: Cell::new(false),
+	    hidpi_scale_factor: builder.hidpi_scale_factor,
+	    load_status: LoadStatus::Started,
+	    status_text: None,
+	    page_title: None,
+	    favicon: None,
+	    focused: false,
+	    animating: false,
+	    cursor: Cursor::Pointer,
+	    back_forward_list: Default::default(),
+	    back_forward_list_index: 0,
+	    user_content_manager: builder.user_content_manager.clone(),
+	})));
 
         let viewport_details = webview.viewport_details();
         servo.paint().add_webview(
