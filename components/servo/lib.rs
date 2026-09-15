@@ -104,6 +104,7 @@ pub use webrender_api::units::{
 };
 
 pub use crate::clipboard_delegate::{ClipboardDelegate, StringRequest};
+pub use crate::credential_management_delegate::CredentialManagementDelegate;
 #[cfg(feature = "gamepad")]
 pub use crate::gamepad_delegate::{
     GamepadDelegate, GamepadHapticEffectRequest, GamepadHapticEffectRequestType,

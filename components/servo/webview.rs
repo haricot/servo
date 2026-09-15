@@ -103,6 +103,7 @@ pub(crate) struct WebViewInner {
     pub(crate) servo: Servo,
     pub(crate) delegate: Rc<dyn WebViewDelegate>,
     pub(crate) clipboard_delegate: Rc<dyn ClipboardDelegate>,
+    pub(crate) credential_management_delegate: Rc<dyn CredentialManagementDelegate>,
 
     #[cfg(feature = "gamepad")]
     pub(crate) gamepad_delegate: Rc<dyn GamepadDelegate>,
@@ -162,37 +163,37 @@ impl WebView {
             .register_rendering_context(builder.rendering_context.clone());
 
         let id = WebViewId::new(painter_id);
-	let webview = Self(Rc::new(RefCell::new(WebViewInner {
-	    id,
-	    servo: servo.clone(),
-	    rendering_context: builder.rendering_context,
-	    delegate: builder.delegate,
-	    clipboard_delegate: builder
-		.clipboard_delegate
-		.unwrap_or_else(|| Rc::new(DefaultClipboardDelegate)),
-	    credential_management_delegate: Rc::new(
-		DefaultCredentialManagementDelegate::default(),
-	    ),
-	    #[cfg(feature = "gamepad")]
-	    gamepad_delegate: builder
-		.gamepad_delegate
-		.unwrap_or_else(|| Rc::new(DefaultGamepadDelegate)),
-	    accesskit_tree_id: None,
-	    grafted_accesskit_tree_id: None,
-	    grafted_accesskit_tree_epoch: None,
-	    accessibility_viewport_changed: Cell::new(false),
-	    hidpi_scale_factor: builder.hidpi_scale_factor,
-	    load_status: LoadStatus::Started,
-	    status_text: None,
-	    page_title: None,
-	    favicon: None,
-	    focused: false,
-	    animating: false,
-	    cursor: Cursor::Pointer,
-	    back_forward_list: Default::default(),
-	    back_forward_list_index: 0,
-	    user_content_manager: builder.user_content_manager.clone(),
-	})));
+        let webview = Self(Rc::new(RefCell::new(WebViewInner {
+            id,
+            servo: servo.clone(),
+            rendering_context: builder.rendering_context,
+            delegate: builder.delegate,
+            clipboard_delegate: builder
+                .clipboard_delegate
+                .unwrap_or_else(|| Rc::new(DefaultClipboardDelegate)),
+            credential_management_delegate: builder
+                .credential_management_delegate
+                .unwrap_or_else(|| Rc::new(DefaultCredentialManagementDelegate::default())),
+            #[cfg(feature = "gamepad")]
+            gamepad_delegate: builder
+                .gamepad_delegate
+                .unwrap_or_else(|| Rc::new(DefaultGamepadDelegate)),
+            accesskit_tree_id: None,
+            grafted_accesskit_tree_id: None,
+            grafted_accesskit_tree_epoch: None,
+            accessibility_viewport_changed: Cell::new(false),
+            hidpi_scale_factor: builder.hidpi_scale_factor,
+            load_status: LoadStatus::Started,
+            status_text: None,
+            page_title: None,
+            favicon: None,
+            focused: false,
+            animating: false,
+            cursor: Cursor::Pointer,
+            back_forward_list: Default::default(),
+            back_forward_list_index: 0,
+            user_content_manager: builder.user_content_manager.clone(),
+        })));
 
         let viewport_details = webview.viewport_details();
         servo.paint().add_webview(
@@ -306,15 +307,9 @@ impl WebView {
         self.inner().gamepad_delegate.clone()
     }
 
+    /// Get the [`CredentialManagementDelegate`] associated with this [`WebView`].
     pub fn credential_management_delegate(&self) -> Rc<dyn CredentialManagementDelegate> {
         self.inner().credential_management_delegate.clone()
-    }
-
-    pub fn set_credential_management_delegate(
-        &self,
-        delegate: Rc<dyn CredentialManagementDelegate>,
-    ) {
-        self.inner_mut().credential_management_delegate = delegate;
     }
 
     /// Get the unique identifier for this [`WebView`].
@@ -1127,6 +1122,7 @@ pub struct WebViewBuilder {
     create_new_webview_responder: Option<AutomaticResponder<Option<NewWebViewDetails>>>,
     user_content_manager: Option<Rc<UserContentManager>>,
     clipboard_delegate: Option<Rc<dyn ClipboardDelegate>>,
+    credential_management_delegate: Option<Rc<dyn CredentialManagementDelegate>>,
     #[cfg(feature = "gamepad")]
     gamepad_delegate: Option<Rc<dyn GamepadDelegate>>,
 }
@@ -1146,6 +1142,7 @@ impl WebViewBuilder {
             create_new_webview_responder: None,
             user_content_manager: None,
             clipboard_delegate: None,
+            credential_management_delegate: None,
             #[cfg(feature = "gamepad")]
             gamepad_delegate: None,
         }
@@ -1195,6 +1192,16 @@ impl WebViewBuilder {
     /// [`ClipboardDelegate`] can be shared among multiple `WebView`s.
     pub fn clipboard_delegate(mut self, clipboard_delegate: Rc<dyn ClipboardDelegate>) -> Self {
         self.clipboard_delegate = Some(clipboard_delegate);
+        self
+    }
+
+    /// Set the [`CredentialManagementDelegate`] for the `WebView` being created. The same
+    /// [`CredentialManagementDelegate`] can be shared among multiple `WebView`s.
+    pub fn credential_management_delegate(
+        mut self,
+        credential_management_delegate: Rc<dyn CredentialManagementDelegate>,
+    ) -> Self {
+        self.credential_management_delegate = Some(credential_management_delegate);
         self
     }
 
