@@ -40,3 +40,63 @@ impl CredentialManagementDelegate for DefaultCredentialManagementDelegate {
         Ok(())
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use servo_url::ServoUrl;
+
+    fn origin(url: &str) -> ImmutableOrigin {
+        ServoUrl::parse(url).unwrap().origin()
+    }
+
+    #[test]
+    fn store_retrieve_delete_secret() {
+        let delegate = DefaultCredentialManagementDelegate::default();
+        let key = origin("https://example.com");
+        let secret = b"secret".to_vec();
+
+        assert_eq!(delegate.retrieve_secret(key.clone()).unwrap(), None);
+
+        delegate
+            .store_secret(key.clone(), secret.clone())
+            .unwrap();
+
+        assert_eq!(
+            delegate.retrieve_secret(key.clone()).unwrap(),
+            Some(secret)
+        );
+
+        delegate.delete_secret(key.clone()).unwrap();
+
+        assert_eq!(delegate.retrieve_secret(key).unwrap(), None);
+    }
+
+    #[test]
+    fn secrets_are_isolated_by_origin() {
+        let delegate = DefaultCredentialManagementDelegate::default();
+
+        let first = origin("https://example.com");
+        let second = origin("https://example.org");
+
+        delegate
+            .store_secret(first.clone(), b"first".to_vec())
+            .unwrap();
+
+        delegate
+            .store_secret(second.clone(), b"second".to_vec())
+            .unwrap();
+
+        assert_eq!(
+            delegate.retrieve_secret(first).unwrap(),
+            Some(b"first".to_vec())
+        );
+
+        assert_eq!(
+            delegate.retrieve_secret(second).unwrap(),
+            Some(b"second".to_vec())
+        );
+    }
+}
